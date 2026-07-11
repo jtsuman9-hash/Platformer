@@ -13,6 +13,7 @@ public class PlayerController : MonoBehaviour
     private float invincibilityTimer;
     private Vector3 initialSpawnPoint;
     private bool isDead = false;
+    private bool isFinished = false;
 
     [Header("Movement Settings")]
     public float moveSpeed = 8f;
@@ -84,9 +85,27 @@ public class PlayerController : MonoBehaviour
             invincibilityTimer -= Time.deltaTime;
         }
 
-        float right = controls.Player.m_right.ReadValue<float>();
-        float left = controls.Player.m_left.ReadValue<float>();
-        horizontalInput = right - left;
+        if (isFinished)
+        {
+            horizontalInput = 0;
+            isLookingUp = false;
+            isLookingDown = false;
+        }
+        else
+        {
+            float right = controls.Player.m_right.ReadValue<float>();
+            float left = controls.Player.m_left.ReadValue<float>();
+            horizontalInput = right - left;
+
+            jumpBufferCounter -= Time.deltaTime;
+            if (jumpBufferCounter > 0f && coyoteTimeCounter > 0f)
+            {
+                ExecuteJump();
+            }
+
+            isLookingUp = controls.Player.Look_up.IsPressed();
+            isLookingDown = controls.Player.Look_Down.IsPressed();
+        }
 
         CheckGrounded();
         
@@ -98,16 +117,6 @@ public class PlayerController : MonoBehaviour
         {
             coyoteTimeCounter -= Time.deltaTime;
         }
-
-        jumpBufferCounter -= Time.deltaTime;
-
-        if (jumpBufferCounter > 0f && coyoteTimeCounter > 0f)
-        {
-            ExecuteJump();
-        }
-
-        isLookingUp = controls.Player.Look_up.IsPressed();
-        isLookingDown = controls.Player.Look_Down.IsPressed();
     }
 
     private void FixedUpdate()
@@ -145,11 +154,13 @@ public class PlayerController : MonoBehaviour
 
     private void OnJumpPressed()
     {
+        if (isDead || isFinished) return;
         jumpBufferCounter = jumpBufferTime;
     }
 
     private void OnJumpReleased()
     {
+        if (isDead || isFinished) return;
         if (rb.linearVelocity.y > 0f)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * jumpCutMultiplier);
@@ -176,6 +187,7 @@ public class PlayerController : MonoBehaviour
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (isDead) return;
+        if (collision.gameObject.CompareTag("Finish") || collision.gameObject.layer == LayerMask.NameToLayer("Finish")) { WinLevel(); return; }
         if (collision.gameObject.layer == LayerMask.NameToLayer("Lava")) { SinkInLava(); return; }
 
         if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
@@ -191,6 +203,7 @@ public class PlayerController : MonoBehaviour
     private void OnCollisionStay2D(Collision2D collision)
     {
         if (isDead) return;
+        if (collision.gameObject.CompareTag("Finish") || collision.gameObject.layer == LayerMask.NameToLayer("Finish")) { WinLevel(); return; }
         if (collision.gameObject.layer == LayerMask.NameToLayer("Lava")) { SinkInLava(); return; }
 
         if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
@@ -206,6 +219,7 @@ public class PlayerController : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (isDead) return;
+        if (collision.gameObject.CompareTag("Finish") || collision.gameObject.layer == LayerMask.NameToLayer("Finish")) { WinLevel(); return; }
         if (collision.gameObject.layer == LayerMask.NameToLayer("Lava")) { SinkInLava(); return; }
 
         if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
@@ -221,6 +235,7 @@ public class PlayerController : MonoBehaviour
     private void OnTriggerStay2D(Collider2D collision)
     {
         if (isDead) return;
+        if (collision.gameObject.CompareTag("Finish") || collision.gameObject.layer == LayerMask.NameToLayer("Finish")) { WinLevel(); return; }
         if (collision.gameObject.layer == LayerMask.NameToLayer("Lava")) { SinkInLava(); return; }
 
         if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
@@ -230,6 +245,18 @@ public class PlayerController : MonoBehaviour
         else if (collision.gameObject.layer == LayerMask.NameToLayer("Border"))
         {
             TakeDamage(2);
+        }
+    }
+
+    private void WinLevel()
+    {
+        if (isDead || isFinished) return;
+        isFinished = true;
+        
+        LavaController lava = FindAnyObjectByType<LavaController>();
+        if (lava != null)
+        {
+            lava.isRising = false;
         }
     }
 
