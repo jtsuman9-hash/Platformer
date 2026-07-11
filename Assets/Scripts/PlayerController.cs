@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
@@ -45,6 +46,7 @@ public class PlayerController : MonoBehaviour
     public bool isLookingUp { get; private set; }
     public bool isLookingDown { get; private set; }
     public float facingDirection { get; private set; } = 1f;
+    public float currentVelocityY { get { return rb.linearVelocity.y; } }
     
     // Timers for the jump assists
     private float coyoteTimeCounter;
@@ -194,6 +196,8 @@ public class PlayerController : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Lava")) { Die(); return; }
+
         // Check if the collided object is on the "Obstacle" layer
         if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
         {
@@ -208,6 +212,8 @@ public class PlayerController : MonoBehaviour
     // Re-apply damage if still touching after i-frames expire
     private void OnCollisionStay2D(Collision2D collision)
     {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Lava")) { Die(); return; }
+
         if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
         {
             TakeDamage(1);
@@ -221,6 +227,8 @@ public class PlayerController : MonoBehaviour
     // Checking triggers too, just in case the user made the obstacles triggers
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Lava")) { Die(); return; }
+
         if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
         {
             TakeDamage(1);
@@ -233,6 +241,8 @@ public class PlayerController : MonoBehaviour
 
     private void OnTriggerStay2D(Collider2D collision)
     {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Lava")) { Die(); return; }
+
         if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
         {
             TakeDamage(1);
@@ -267,10 +277,8 @@ public class PlayerController : MonoBehaviour
     private void Die()
     {
         Debug.Log("Player Died!");
-        // For now, let's just reset health and position as a simple respawn
-        currentHealth = maxHealth;
-        transform.position = initialSpawnPoint; // Teleport back to where they started the level
-        rb.linearVelocity = Vector2.zero;
+        // Completely reload the scene to reset everything (including the rising lava)
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     private void OnDrawGizmosSelected()

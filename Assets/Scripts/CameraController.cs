@@ -25,6 +25,7 @@ public class CameraController : MonoBehaviour
     public float lookUpDistance = 3f;
     public float lookDownDistance = 3f;
     public float lookDelay = 0.5f; // How long to hold before looking
+    public float fallLookDownThreshold = -12f; // Velocity at which camera automatically pans down
 
     private Vector3 currentVelocity;
     
@@ -78,9 +79,15 @@ public class CameraController : MonoBehaviour
                 targetVerticalOffset = -lookDownDistance;
             }
         }
+        else if (playerController.currentVelocityY < fallLookDownThreshold)
+        {
+            // Automatically pan the camera down if the player is falling fast
+            targetVerticalOffset = -lookDownDistance;
+            lookTimer = 0f;
+        }
         else
         {
-            // Reset look timer and offset if not holding up/down
+            // Reset look timer and offset if not holding up/down and not falling
             lookTimer = 0f;
             targetVerticalOffset = 0f;
         }

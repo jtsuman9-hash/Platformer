@@ -14,8 +14,8 @@ TagManager:
   - Border
   - Edge
   - Obstacle
-  - 
-  - 
+  - Finish
+  - Lava
   - 
   - 
   - 
@@ -49,6 +49,9 @@ TagManager:
     locked: 0
   - name: Border
     uniqueID: 2052344813
+    locked: 0
+  - name: Lava
+    uniqueID: 955948583
     locked: 0
   m_RenderingLayers:
   - Default
